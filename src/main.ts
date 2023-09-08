@@ -1,6 +1,5 @@
 import { AppModule } from '@/app.module';
 import type { NestConfig } from '@/common/configs/config.interface';
-import { HttpExceptionFilter } from '@/common/filters/HttpExceptions.filter';
 import { setupSwagger } from '@/common/swagger';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
@@ -15,10 +14,6 @@ async function bootstrap() {
   app.enableCors();
   app.use(json({ limit: '100mb' }));
   app.use(urlencoded({ extended: true, limit: '100mb' }));
-
-  // Prisma Client Exception Filter for unhandled exceptions
-  const { httpAdapter } = app.get(HttpAdapterHost);
-  app.useGlobalFilters(new HttpExceptionFilter(httpAdapter));
 
   await setupSwagger(app);
 
