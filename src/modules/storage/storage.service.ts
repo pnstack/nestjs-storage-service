@@ -93,10 +93,6 @@ export class StorageService implements OnModuleInit {
     });
 
     const signedUrl = await getSignedUrl(this.s3, command, { expiresIn: 3600 });
-    console.log(
-      '🚀 ~ file: storage.service.ts:86 ~ StorageService ~ getUploadUrl ~ signedUrl:',
-      signedUrl
-    );
 
     const parsedUrl = new URL(signedUrl);
 

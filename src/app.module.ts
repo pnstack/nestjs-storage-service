@@ -8,6 +8,7 @@ import config from '@/common/configs/config';
 
 import { GraphQLModule } from './shared/graphql';
 import { StorageModule } from './modules/storage/storage.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { StorageModule } from './modules/storage/storage.module';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
     }),
-    StorageModule
+    StorageModule,
+    UploadModule
 
   ],
   controllers: [],

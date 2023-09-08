@@ -1,6 +1,17 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
 import { StorageService } from './storage.service';
+import { disk, storageClass } from '../upload/utils/storage';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UploadedFile,
+  UploadedFiles,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Storage')
 @Controller('storage')
@@ -22,4 +33,8 @@ export class StorageController {
   async getFile(@Query('name') name: string) {
     return await this.storageService.getViewUrl(name);
   }
+
+ 
+
+
 }
