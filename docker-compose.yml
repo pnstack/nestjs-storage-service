@@ -1,0 +1,45 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:13
+    restart: on-failure
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=prisma
+      - POSTGRES_PASSWORD=topsecret
+      - POSTGRES_DB=postgres
+      - DB_PORT=5432
+      - DB_SCHEMA=public
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis/redis-stack:latest
+    restart: on-failure
+    ports:
+      - 8001:8001
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+  # api:
+  #   image: ghcr.io/pnstack/template-nest-prisma:release
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #   restart: on-failure
+  #   ports:
+  #     - 4005:4005
+  #   volumes:
+  #     - /app/node_modules
+  #     - .:/app
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - REDIS_HOST=redis
+  #     - DB_HOST=postgres
+  #     - DATABASE_URL=postgresql://prisma:topsecret@postgres:5432/postgres?schema=public&sslmode=prefer
+  #   command: npm run dev
+volumes:
+  redis-data:
+  postgres-data:
