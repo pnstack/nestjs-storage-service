@@ -14,5 +14,17 @@ services:
     environment:
       - MINIO_ROOT_USER=ADMIN
       - MINIO_ROOT_PASSWORD=ADMIN@123
+  storage:
+    image: ghcr.io/pnstack/nestjs-storage-service:release
+    container_name: nestjs-storage-service
+    depends_on:
+      - minio
+    restart: on-failure
+    ports:
+      - 4006:4000
+    volumes:
+      - ./uploads:/app/uploads
+    env_file:
+      - .env  
 volumes:
   minio-data:

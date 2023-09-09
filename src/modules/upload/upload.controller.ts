@@ -32,7 +32,7 @@ export class UploadController {
     return file;
   }
 
-  @Post('/:ticketId/images')
+  @Post('/files')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     type: 'multipart/form-data',
@@ -55,7 +55,7 @@ export class UploadController {
       storage: storageClass.disk,
     })
   )
-  async uploadImageOcr(@UploadedFiles() files: Array<Express.Multer.File>) {
+  async uploadFiles(@UploadedFiles() files: Array<Express.Multer.File>) {
     return files;
   }
 }
