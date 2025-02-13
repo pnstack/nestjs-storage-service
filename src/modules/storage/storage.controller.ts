@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   Post,
+  Delete,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -20,6 +21,20 @@ import { StorageService } from './storage.service';
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
+  @Get()
+  @ApiOperation({ summary: 'List all files in storage' })
+  async listFiles() {
+    return await this.storageService.listFiles();
+  }
+
+  @Get(':key')
+  @ApiOperation({ summary: 'Get a pre-signed URL to view a file' })
+  async viewFile(@Param('key') key: string) {
+    return {
+      url: await this.storageService.getViewUrl(key),
+    };
+  }
+
   @Post('upload')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -34,16 +49,12 @@ export class StorageController {
       },
     },
   })
-  @ApiOperation({ summary: 'Upload a file directly to MinIO' })
+  @ApiOperation({ summary: 'Upload a file directly' })
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     const extension = '.' + file.originalname.split('.').pop();
     const fileKey = `${Date.now()}-${file.originalname}`;
-    
-    const url = await this.storageService.putObject(
-      fileKey,
-      file.buffer,
-      file.mimetype
-    );
+
+    const url = await this.storageService.putObject(fileKey, file.buffer, file.mimetype);
 
     return {
       fileKey,
@@ -52,39 +63,17 @@ export class StorageController {
     };
   }
 
-  @Get('download/:name')
-  @ApiOperation({ summary: 'Download a file from MinIO' })
-  async downloadFile(
-    @Param('name') name: string,
-    @Response({ passthrough: true }) res: ExpressResponse,
-  ) {
-    const stream = await this.storageService.getFile(name);
-    const contentType = await this.storageService.getFileContentType(name);
-    
-    res.set({
-      'Content-Type': contentType,
-      'Content-Disposition': `attachment; filename="${name}"`,
-    });
-
-    return new StreamableFile(stream);
-  }
-
-  @Get('upload-url')
+  @Get('upload/presigned')
   @ApiOperation({ summary: 'Get a pre-signed URL for file upload' })
   async getUploadUrl(@Query('extension') extension: string) {
     const response = await this.storageService.getUploadUrl(extension);
     return response;
   }
 
-  @Get('list')
-  @ApiOperation({ summary: 'List all files in storage' })
-  async listFiles() {
-    return await this.storageService.listFiles();
-  }
-
-  @Get('file')
-  @ApiOperation({ summary: 'Get a pre-signed URL to view/download a file' })
-  async getFile(@Query('name') name: string) {
-    return await this.storageService.getViewUrl(name);
+  @Delete(':key')
+  @ApiOperation({ summary: 'Delete a file from storage' })
+  async deleteFile(@Param('key') key: string) {
+    await this.storageService.deleteFile(key);
+    return { message: 'File deleted successfully' };
   }
 }
