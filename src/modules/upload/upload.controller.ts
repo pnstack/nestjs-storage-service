@@ -1,9 +1,9 @@
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { ApiConsumes, ApiBody } from '@nestjs/swagger';
-import { UploadService } from './upload.service';
 import { Controller, Post, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
-import { storageClass } from './utils/storage';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes } from '@nestjs/swagger';
 
+import { storageClass } from './utils/storage';
+import { UploadService } from './upload.service';
 
 @Controller('upload')
 export class UploadController {

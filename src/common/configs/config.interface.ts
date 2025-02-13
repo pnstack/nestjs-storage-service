@@ -4,6 +4,7 @@ export interface Config {
   swagger: SwaggerConfig;
   security: SecurityConfig;
   graphql: GraphqlConfig;
+  storage: StorageConfig;
 }
 
 export interface NestConfig {
@@ -33,4 +34,13 @@ export interface GraphqlConfig {
   debug: boolean;
   schemaDestination: string;
   sortSchema: boolean;
+}
+
+export interface StorageConfig {
+  endpoint: string;
+  region: string;
+  accessKey: string;
+  secretKey: string;
+  bucket: string;
+  forcePathStyle: boolean;
 }

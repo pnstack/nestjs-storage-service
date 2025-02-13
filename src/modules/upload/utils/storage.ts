@@ -2,7 +2,6 @@ import { existsSync, mkdirSync } from 'fs';
 import { diskStorage, memoryStorage } from 'multer';
 import { extname } from 'path';
 
-
 export const disk = diskStorage({
   destination: (req: any, file: any, cb: any) => {
     const uploadPath = `./uploads`;
@@ -23,4 +22,4 @@ export const disk = diskStorage({
 
 export const storageClass = {
   disk,
-}
+};
