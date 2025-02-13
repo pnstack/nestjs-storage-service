@@ -14,13 +14,19 @@ import { extname } from 'path';
 import { Readable } from 'stream';
 
 import { randomFileName } from 'src/utils/tool';
+import { LoggerService } from '@/common/logger/logger.service';
 
 @Injectable()
 export class StorageService implements OnModuleInit {
   s3: S3Client;
   private endpoint: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly logger: LoggerService
+  ) {
+    this.logger.setContext('StorageService');
+    
     // For MinIO, we need to use path style endpoint
     const storageConfig = this.configService.get('storage');
     this.endpoint = storageConfig.endpoint;
@@ -36,7 +42,7 @@ export class StorageService implements OnModuleInit {
   }
 
   onModuleInit() {
-    console.log('StorageService initialized with endpoint:', this.endpoint);
+    this.logger.log('StorageService initialized with endpoint: ' + this.endpoint);
   }
 
   private getBucketName(): string {
@@ -44,6 +50,7 @@ export class StorageService implements OnModuleInit {
   }
 
   async getFile(name: string): Promise<Readable> {
+    this.logger.debug(`Getting file: ${name}`);
     const res = await this.s3.send(
       new GetObjectCommand({
         Bucket: this.getBucketName(),
@@ -54,6 +61,7 @@ export class StorageService implements OnModuleInit {
   }
 
   async getFileContentType(name: string): Promise<string> {
+    this.logger.debug(`Getting content type for file: ${name}`);
     const res = await this.s3.send(
       new HeadObjectCommand({
         Bucket: this.getBucketName(),
@@ -64,6 +72,7 @@ export class StorageService implements OnModuleInit {
   }
 
   async getViewUrl(name: string) {
+    this.logger.debug(`Generating view URL for file: ${name}`);
     const command = new GetObjectCommand({
       Bucket: this.getBucketName(),
       Key: name,
@@ -73,6 +82,7 @@ export class StorageService implements OnModuleInit {
   }
 
   async putObject(key: string, body: Buffer, contentType: string) {
+    this.logger.debug(`Uploading object: ${key} (${contentType})`);
     const command = new PutObjectCommand({
       Bucket: this.getBucketName(),
       Key: key,
@@ -80,14 +90,20 @@ export class StorageService implements OnModuleInit {
       ContentType: contentType,
     });
 
-    await this.s3.send(command);
-    const url = this.getObjectUrl(key);
-    const signedUrl = await this.getViewUrl(key);
-    
-    return {
-      url,
-      signedUrl
-    };
+    try {
+      await this.s3.send(command);
+      const url = this.getObjectUrl(key);
+      const signedUrl = await this.getViewUrl(key);
+      
+      this.logger.log(`Successfully uploaded object: ${key}`);
+      return {
+        url,
+        signedUrl
+      };
+    } catch (error) {
+      this.logger.error(`Failed to upload object: ${key}`, error.stack);
+      throw error;
+    }
   }
 
   private getObjectUrl(key: string): string {
@@ -95,8 +111,13 @@ export class StorageService implements OnModuleInit {
   }
 
   async getUploadUrl(extension: string) {
+    this.logger.debug(`Generating upload URL for extension: ${extension}`);
     const contentType = mime.lookup(extension) || '';
-    if (!contentType) throw new Error('Invalid file extension');
+    if (!contentType) {
+      this.logger.error(`Invalid file extension: ${extension}`);
+      throw new Error('Invalid file extension');
+    }
+    
     const fileKey = `${randomFileName()}${extension}`;
     const command = new PutObjectCommand({
       Key: fileKey,
@@ -115,6 +136,7 @@ export class StorageService implements OnModuleInit {
   }
 
   async listFiles() {
+    this.logger.debug('Listing all files');
     return await this.s3.send(
       new ListObjectsV2Command({
         Bucket: this.getBucketName(),
@@ -123,26 +145,40 @@ export class StorageService implements OnModuleInit {
   }
 
   async deleteFile(key: string): Promise<void> {
-    await this.s3.send(
-      new DeleteObjectCommand({
-        Bucket: this.getBucketName(),
-        Key: key,
-      })
-    );
+    this.logger.debug(`Deleting file: ${key}`);
+    try {
+      await this.s3.send(
+        new DeleteObjectCommand({
+          Bucket: this.getBucketName(),
+          Key: key,
+        })
+      );
+      this.logger.log(`Successfully deleted file: ${key}`);
+    } catch (error) {
+      this.logger.error(`Failed to delete file: ${key}`, error.stack);
+      throw error;
+    }
   }
 
   async uploadMultipleFiles(files: Array<{ buffer: Buffer; filename: string; mimetype: string }>) {
+    this.logger.log(`Uploading ${files.length} files`);
     const uploadPromises = files.map(async (file) => {
       const fileKey = `${Date.now()}-${file.filename}`;
-      const { url, signedUrl } = await this.putObject(fileKey, file.buffer, file.mimetype);
-      
-      return {
-        fileKey,
-        url,
-        signedUrl,
-        contentType: file.mimetype,
-        originalName: file.filename
-      };
+      try {
+        const { url, signedUrl } = await this.putObject(fileKey, file.buffer, file.mimetype);
+        
+        this.logger.debug(`Successfully uploaded file: ${file.filename} as ${fileKey}`);
+        return {
+          fileKey,
+          url,
+          signedUrl,
+          contentType: file.mimetype,
+          originalName: file.filename
+        };
+      } catch (error) {
+        this.logger.error(`Failed to upload file: ${file.filename}`, error.stack);
+        throw error;
+      }
     });
 
     return Promise.all(uploadPromises);
