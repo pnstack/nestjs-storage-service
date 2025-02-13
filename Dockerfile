@@ -1,6 +1,6 @@
-FROM node:16.14.2-alpine AS builder
+FROM node:18.20.2-alpine AS builder
 RUN apk add --no-cache libc6-compat
-RUN npm i -g pnpm@8.2.0
+RUN npm i -g pnpm@9.15.4
 
 # Create app directory
 WORKDIR /app
@@ -11,9 +11,9 @@ RUN pnpm install
 COPY . .
 RUN npm run build
 
-FROM node:16.14.2-alpine 
+FROM node:18.20.2-alpine 
 RUN apk add --no-cache libc6-compat
-RUN npm i -g pnpm@8.2.0
+RUN npm i -g pnpm@9.15.4
 WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
