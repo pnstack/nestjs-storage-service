@@ -124,4 +124,20 @@ export class StorageService implements OnModuleInit {
       })
     );
   }
+
+  async uploadMultipleFiles(files: Array<{ buffer: Buffer; filename: string; mimetype: string }>) {
+    const uploadPromises = files.map(async (file) => {
+      const fileKey = `${Date.now()}-${file.filename}`;
+      const url = await this.putObject(fileKey, file.buffer, file.mimetype);
+      
+      return {
+        fileKey,
+        url,
+        contentType: file.mimetype,
+        originalName: file.filename
+      };
+    });
+
+    return Promise.all(uploadPromises);
+  }
 }

@@ -6,12 +6,13 @@ import {
   Delete,
   Query,
   UploadedFile,
+  UploadedFiles,
   UseInterceptors,
   Response,
   StreamableFile,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiBody, ApiConsumes, ApiTags, ApiOperation } from '@nestjs/swagger';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { ApiBody, ApiConsumes, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Response as ExpressResponse } from 'express';
 
 import { StorageService } from './storage.service';
@@ -35,7 +36,7 @@ export class StorageController {
     };
   }
 
-  @Post('upload')
+  @Post('upload/single')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -49,7 +50,7 @@ export class StorageController {
       },
     },
   })
-  @ApiOperation({ summary: 'Upload a file directly' })
+  @ApiOperation({ summary: 'Upload a single file directly' })
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
     const extension = '.' + file.originalname.split('.').pop();
     const fileKey = `${Date.now()}-${file.originalname}`;
@@ -61,6 +62,50 @@ export class StorageController {
       url,
       contentType: file.mimetype,
     };
+  }
+
+  @Post('upload/multiple')
+  @UseInterceptors(FilesInterceptor('files', 10)) // Allow up to 10 files
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+        },
+      },
+    },
+  })
+  @ApiOperation({ summary: 'Upload multiple files directly' })
+  @ApiResponse({
+    status: 201,
+    description: 'Files uploaded successfully',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          fileKey: { type: 'string' },
+          url: { type: 'string' },
+          contentType: { type: 'string' },
+          originalName: { type: 'string' },
+        },
+      },
+    },
+  })
+  async uploadMultipleFiles(@UploadedFiles() files: Express.Multer.File[]) {
+    const filesData = files.map(file => ({
+      buffer: file.buffer,
+      filename: file.originalname,
+      mimetype: file.mimetype,
+    }));
+
+    return await this.storageService.uploadMultipleFiles(filesData);
   }
 
   @Get('upload/presigned')
