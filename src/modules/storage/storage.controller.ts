@@ -51,15 +51,31 @@ export class StorageController {
     },
   })
   @ApiOperation({ summary: 'Upload a single file directly' })
+  @ApiResponse({
+    status: 201,
+    description: 'File uploaded successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        fileKey: { type: 'string' },
+        url: { type: 'string', description: 'Direct S3 URL' },
+        signedUrl: { type: 'string', description: 'Pre-signed URL for viewing' },
+        contentType: { type: 'string' },
+      },
+    },
+  })
   async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    const extension = '.' + file.originalname.split('.').pop();
     const fileKey = `${Date.now()}-${file.originalname}`;
-
-    const url = await this.storageService.putObject(fileKey, file.buffer, file.mimetype);
+    const { url, signedUrl } = await this.storageService.putObject(
+      fileKey,
+      file.buffer,
+      file.mimetype
+    );
 
     return {
       fileKey,
       url,
+      signedUrl,
       contentType: file.mimetype,
     };
   }
@@ -91,7 +107,8 @@ export class StorageController {
         type: 'object',
         properties: {
           fileKey: { type: 'string' },
-          url: { type: 'string' },
+          url: { type: 'string', description: 'Direct S3 URL' },
+          signedUrl: { type: 'string', description: 'Pre-signed URL for viewing' },
           contentType: { type: 'string' },
           originalName: { type: 'string' },
         },

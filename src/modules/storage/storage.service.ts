@@ -81,7 +81,13 @@ export class StorageService implements OnModuleInit {
     });
 
     await this.s3.send(command);
-    return this.getObjectUrl(key);
+    const url = this.getObjectUrl(key);
+    const signedUrl = await this.getViewUrl(key);
+    
+    return {
+      url,
+      signedUrl
+    };
   }
 
   private getObjectUrl(key: string): string {
@@ -128,11 +134,12 @@ export class StorageService implements OnModuleInit {
   async uploadMultipleFiles(files: Array<{ buffer: Buffer; filename: string; mimetype: string }>) {
     const uploadPromises = files.map(async (file) => {
       const fileKey = `${Date.now()}-${file.filename}`;
-      const url = await this.putObject(fileKey, file.buffer, file.mimetype);
+      const { url, signedUrl } = await this.putObject(fileKey, file.buffer, file.mimetype);
       
       return {
         fileKey,
         url,
+        signedUrl,
         contentType: file.mimetype,
         originalName: file.filename
       };
