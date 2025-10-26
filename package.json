@@ -8,8 +8,20 @@
     "nestjs",
     "typescript",
     "passport",
-    "graphql"
+    "graphql",
+    "storage",
+    "s3",
+    "file-upload"
   ],
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "exports": {
+    ".": "./dist/main.js",
+    "./client": "./dist/client/index.js",
+    "./client/nestjs": "./dist/client/nestjs/index.js",
+    "./client/axios": "./dist/client/axios/index.js",
+    "./client/shared": "./dist/client/shared/index.js"
+  },
   "scripts": {
     "build": "nest build",
     "clean": "rm -rf ./node_modules",
