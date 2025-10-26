@@ -60,6 +60,33 @@ const config: Config = {
   },
 };
 
-console.log('Config:', config);
+// Log non-sensitive config only (exclude passwords and secrets)
+const safeConfig = {
+  nest: config.nest,
+  cors: config.cors,
+  swagger: config.swagger,
+  graphql: config.graphql,
+  storage: {
+    ...config.storage,
+    accessKey: config.storage.accessKey ? '***' : undefined,
+    secretKey: config.storage.secretKey ? '***' : undefined,
+  },
+  database: {
+    ...config.database,
+    password: config.database.password ? '***' : undefined,
+  },
+  redis: {
+    ...config.redis,
+    password: config.redis.password ? '***' : undefined,
+  },
+  bull: {
+    redis: {
+      ...config.bull.redis,
+      password: config.bull.redis.password ? '***' : undefined,
+    },
+  },
+};
+
+console.log('Config loaded:', safeConfig);
 
 export default (): Config => config;
