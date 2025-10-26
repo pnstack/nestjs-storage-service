@@ -9,6 +9,7 @@ import { LoggerModule } from './common/logger/logger.module';
 
 import { StorageModule } from './modules/storage/storage.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { UploadModule } from './modules/upload/upload.module';
     }),
     StorageModule,
     UploadModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
