@@ -5,6 +5,9 @@ export interface Config {
   security: SecurityConfig;
   graphql: GraphqlConfig;
   storage: StorageConfig;
+  database: DatabaseConfig;
+  redis: RedisConfig;
+  bull: BullConfig;
 }
 
 export interface NestConfig {
@@ -43,4 +46,29 @@ export interface StorageConfig {
   secretKey: string;
   bucket: string;
   forcePathStyle: boolean;
+}
+
+export interface DatabaseConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+  synchronize: boolean;
+  logging: boolean;
+}
+
+export interface RedisConfig {
+  host: string;
+  port: number;
+  password?: string;
+  db: number;
+}
+
+export interface BullConfig {
+  redis: {
+    host: string;
+    port: number;
+    password?: string;
+  };
 }
