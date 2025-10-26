@@ -192,7 +192,7 @@ curl -X POST http://localhost:4000/api/v1/objects \
   }'
 ```
 
-The response will include an `uploadUrl` that you can use to upload the file directly to S3.
+The response will include a pre-signed `uploadUrl` that you can use to upload the file directly to S3/MinIO storage using an HTTP PUT request.
 
 ### Database Schema
 
