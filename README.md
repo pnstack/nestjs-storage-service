@@ -12,6 +12,7 @@ A robust storage service built with NestJS for handling file uploads and storage
 - 🔄 GraphQL support
 - 📊 Bull queue for background jobs
 - 🗄️ Redis caching integration
+- 🔌 **Client libraries for NestJS backend and frontend applications**
 
 ## Prerequisites
 
@@ -193,6 +194,74 @@ curl -X POST http://localhost:4000/api/v1/objects \
 ```
 
 The response will include a pre-signed `uploadUrl` that you can use to upload the file directly to S3/MinIO storage using an HTTP PUT request.
+
+### Client Libraries
+
+This service provides ready-to-use client libraries for both backend and frontend applications:
+
+#### NestJS Backend Client
+
+For NestJS microservices, use the `StorageClientModule`:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { StorageClientModule } from '@pnstack/nestjs-storage-service/client/nestjs';
+
+@Module({
+  imports: [
+    StorageClientModule.register({
+      baseUrl: 'http://localhost:4000',
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+Then inject the service:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { StorageClientService } from '@pnstack/nestjs-storage-service/client/nestjs';
+
+@Injectable()
+export class MyService {
+  constructor(private readonly storageClient: StorageClientService) {}
+
+  async uploadFile(file: Express.Multer.File) {
+    const object = await this.storageClient.createObject({
+      namespace: 'documents',
+      name: file.originalname,
+      contentType: file.mimetype,
+      sizeBytes: file.size,
+    });
+    return object;
+  }
+}
+```
+
+#### Frontend Client (Axios)
+
+For frontend applications (React, Vue, Angular, etc.), use the `StorageClient`:
+
+```typescript
+import { StorageClient } from '@pnstack/nestjs-storage-service/client/axios';
+
+const client = new StorageClient({
+  baseUrl: 'http://localhost:4000',
+});
+
+// Create and upload a file
+const object = await client.createObject({
+  namespace: 'user-uploads',
+  name: file.name,
+  contentType: file.type,
+  sizeBytes: file.size,
+});
+
+await client.uploadFile(object.uploadUrl!, file);
+```
+
+For detailed documentation and examples, see [src/client/README.md](src/client/README.md).
 
 ### Database Schema
 
