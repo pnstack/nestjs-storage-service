@@ -3,6 +3,7 @@ import type { NestConfig } from '@/common/configs/config.interface';
 import { setupSwagger } from '@/common/swagger';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 
 async function bootstrap() {
@@ -14,6 +15,18 @@ async function bootstrap() {
   app.enableCors();
   app.use(json({ limit: '100mb' }));
   app.use(urlencoded({ extended: true, limit: '100mb' }));
+
+  // Enable validation pipe for DTOs
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true, // Auto-convert string to number for query/path params
+      },
+    }),
+  );
 
   await setupSwagger(app);
 

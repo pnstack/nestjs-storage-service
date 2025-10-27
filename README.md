@@ -12,6 +12,7 @@ A robust storage service built with NestJS for handling file uploads and storage
 - 🔄 GraphQL support
 - 📊 Bull queue for background jobs
 - 🗄️ Redis caching integration
+- 🔌 **Client libraries for NestJS backend and frontend applications**
 
 ## Prerequisites
 
@@ -104,3 +105,172 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 For support, please open an issue in the GitHub repository.
+
+## Modern Storage Service Features
+
+This service now includes the following capabilities:
+
+### Core Features
+- **Namespace Management**: Create and manage isolated namespaces with quotas
+- **Object Storage**: Store objects with metadata and generate signed URLs
+- **Multipart Uploads**: Resumable uploads for large files (up to 100MB)
+- **Audit Logging**: Track all CREATE, READ, and DELETE operations
+- **Health Checks**: Liveness and readiness endpoints
+
+### API Endpoints
+
+Base URL: `http://localhost:4000/api/v1`
+
+#### Namespaces
+- `POST /namespaces` - Create a namespace
+- `GET /namespaces/:name` - Get namespace details
+
+#### Objects
+- `POST /objects` - Create object and get upload URL
+- `GET /objects/:id` - Get object metadata
+- `POST /objects/:id/signed-url` - Generate download URL
+- `DELETE /objects/:id` - Delete object
+- `GET /namespaces/:namespace/objects` - List objects in namespace
+
+#### Multipart Uploads
+- `POST /uploads/initiate` - Start multipart upload
+- `PUT /uploads/:sessionId/parts/:partNumber` - Upload a part
+- `POST /uploads/:sessionId/complete` - Complete upload
+
+#### Health
+- `GET /health/live` - Liveness check
+- `GET /health/ready` - Readiness check (DB + S3)
+
+### Quick Start
+
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Start services with Docker Compose:
+```bash
+docker-compose up -d postgres redis minio
+```
+
+3. Copy environment file:
+```bash
+cp .env.example .env
+```
+
+4. Run the application:
+```bash
+npm run dev
+```
+
+5. Access Swagger documentation:
+```
+http://localhost:4000/api
+```
+
+### Example Usage
+
+#### Create a Namespace
+```bash
+curl -X POST http://localhost:4000/api/v1/namespaces \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "org-demo",
+    "displayName": "Demo Organization",
+    "quotaBytes": 1073741824
+  }'
+```
+
+#### Create an Object
+```bash
+curl -X POST http://localhost:4000/api/v1/objects \
+  -H "Content-Type: application/json" \
+  -d '{
+    "namespace": "org-demo",
+    "name": "test-file.pdf",
+    "contentType": "application/pdf",
+    "sizeBytes": 1024000
+  }'
+```
+
+The response will include a pre-signed `uploadUrl` that you can use to upload the file directly to S3/MinIO storage using an HTTP PUT request.
+
+### Client Libraries
+
+This service provides ready-to-use client libraries for both backend and frontend applications:
+
+#### NestJS Backend Client
+
+For NestJS microservices, use the `StorageClientModule`:
+
+```typescript
+import { Module } from '@nestjs/common';
+import { StorageClientModule } from '@pnstack/nestjs-storage-service/client/nestjs';
+
+@Module({
+  imports: [
+    StorageClientModule.register({
+      baseUrl: 'http://localhost:4000',
+    }),
+  ],
+})
+export class AppModule {}
+```
+
+Then inject the service:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { StorageClientService } from '@pnstack/nestjs-storage-service/client/nestjs';
+
+@Injectable()
+export class MyService {
+  constructor(private readonly storageClient: StorageClientService) {}
+
+  async uploadFile(file: Express.Multer.File) {
+    const object = await this.storageClient.createObject({
+      namespace: 'documents',
+      name: file.originalname,
+      contentType: file.mimetype,
+      sizeBytes: file.size,
+    });
+    return object;
+  }
+}
+```
+
+#### Frontend Client (Axios)
+
+For frontend applications (React, Vue, Angular, etc.), use the `StorageClient`:
+
+```typescript
+import { StorageClient } from '@pnstack/nestjs-storage-service/client/axios';
+
+const client = new StorageClient({
+  baseUrl: 'http://localhost:4000',
+});
+
+// Create and upload a file
+const object = await client.createObject({
+  namespace: 'user-uploads',
+  name: file.name,
+  contentType: file.type,
+  sizeBytes: file.size,
+});
+
+await client.uploadFile(object.uploadUrl!, file);
+```
+
+For detailed documentation and examples, see [src/client/README.md](src/client/README.md).
+
+### Database Schema
+
+The service uses PostgreSQL with TypeORM. Tables are auto-created on startup:
+- `namespaces` - Namespace/tenant information
+- `objects` - Object metadata
+- `upload_sessions` - Multipart upload sessions
+- `audit_events` - Audit trail
+
+### Configuration
+
+See `.env.example` for all configuration options.
