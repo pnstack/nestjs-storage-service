@@ -27,7 +27,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@apollo/server": "^4.11.3",
+    "@apollo/server": "^5.4.0",
     "@aws-sdk/client-s3": "^3.744.0",
     "@aws-sdk/s3-presigned-post": "^3.744.0",
     "@aws-sdk/s3-request-presigner": "^3.744.0",
